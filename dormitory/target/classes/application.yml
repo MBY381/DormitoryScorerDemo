@@ -1,0 +1,25 @@
+logging:
+    level:
+        com:
+            xjtu:
+                dormitory: debug
+        root: info
+        web: trace
+mybatis:
+    mapper-locations: mappers/**/*.xml
+pagehelper:
+    helper-dialect: mysql
+    reasonable: true
+server:
+    port: 8888
+spring:
+    datasource:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        password: root
+        url: jdbc:mysql://localhost:3306/dormitory
+        username: root
+sure:
+    token:
+        header-name: Token
+        expired-time: 100000000
+        calim-userid-name: UserID
