@@ -5,7 +5,7 @@
     style="width: 178px;
     height: 100%;
     position:relative;
-    top:15px;"
+    top:10px;"
     v-model:openKeys="openKeys"
     v-model:selectedKeys="selectedKeys"
     mode="inline"
@@ -16,9 +16,6 @@
   </a-menu-item>
   <a-menu-item key="2" >
         <span>历史记录</span>
-  </a-menu-item>
-  <a-menu-item key="3" >
-        <span>单独增加记录</span>
   </a-menu-item>
   </a-menu> 
   <br>
@@ -32,7 +29,7 @@
     height: 85%;
     position:absolute;
     left:192px;
-    top:50px;">
+    top:43px;">
       <a-page-header
         style="margin-left:0px;"
         title="选择周次"
@@ -40,15 +37,21 @@
       />
       <a-input v-model:value="getObj.sr_weekno" placeholder="请输入周次" style="width:120px;margin-left:22px;" />
       <a-button  @click="changeWeekno" style="margin-left:10px;">确认</a-button>
- <br>
- <br>
+      <span>
+        <a-button  
+        @click="openDrawer" 
+        style="position:relative;
+        left:950px;" type="danger" ghost>单独增加记录</a-button>
+      </span>  
     <a-table
           :columns="columns1"
           :data-source="page1.list"
           :pagination="pagination1"
           @change="handleTableChange1"
           bordered
-          style="margin-left:20px;"
+          style="margin-left:20px;
+          position:relative;
+          top:10px;"
           >
            <template #opr1="{ record }">
               <a-rate v-model:value="record.sr_score" allow-half :tooltips="desc1"></a-rate>
@@ -70,19 +73,29 @@
       height: 85%;
       position:absolute;
       left:192px;
-      top:50px;">
+      top:43px;">
     <a-page-header
      style="margin-left:0px;"
      title="历史记录"
      sub-title="所有有效记录"
     />
-     <br>  
+     <a-input-search
+         v-model:value="dormIDtarget.dorm_id"
+         placeholder="输入宿舍号搜索"
+         style="width: 200px;
+         position:relative;
+         left:20px;"
+         @search="searchAndUpdateList"
+        />
      <a-table
+     
         :columns="columns"
         :data-source="page.list"
         :pagination="pagination"
         @change="handleTableChange"
-        style="margin-left:20px;"
+        style="margin-left:20px;
+        position:relative;
+        top:10px;" 
         bodered
        >
      <template #opr="{ record }">
@@ -111,37 +124,47 @@
 </a-modal>
 
 
-<!-- 单独增添记录窗口 -->
-<a-modal v-model:visible="visible6" title="单独增添记录" @ok="temp">
-    <a-form :model="addObj"
+<!-- 单独增添记录抽屉 -->
+<a-drawer
+    title="单独增添记录 (需确保不重复)"
+    :width="520"
+    :visible="visible6"
+    :body-style="{ paddingBottom: '80px' }"
+    @close="onClose"
+  ><a-form :model="addObj"
       :label-col="{ span: 5 }"
       :wrapper-col="{ span: 14 }"
       >
       <a-form-item label="宿舍号">
-        <a-input v-model:value="addObj.dorm_id" style="width: 300px;border-bottom: 1px solid rgb(240, 240, 240);" />
+        <a-input v-model:value="addObj.dorm_id" 
+        style="width: 300px;border-bottom: 1px solid rgb(240, 240, 240);" 
+        placeholder="输入宿舍号"/>
       </a-form-item>
       <a-form-item label="分数">
-      
            <a-rate v-model:value="addObj.sr_score" :tooltips="desc1" allow-half :allow-clear="false" />
            <span class="ant-rate-text">{{ desc[addObj.sr_score*2 - 1] }}</span>
-        
       </a-form-item>
       <a-form-item label="周次">
-        <a-input v-model:value="addObj.sr_weekno" style="width: 300px;border-bottom: 1px solid rgb(240, 240, 240);" />
+        <a-input v-model:value="addObj.sr_weekno" 
+        style="width: 300px;border-bottom: 1px solid rgb(240, 240, 240);"
+        placeholder="请输入分数周次" />
       </a-form-item>
       <a-form-item label="备注">
         <a-textarea v-model:value="addObj.sr_remark" style="width: 500px;border-bottom: 1px solid rgb(240, 240, 240);" :rows="3"/>
       </a-form-item>
     </a-form>
-</a-modal>
+    <a-button type="primary" @click="uploadAndCLose" >确定</a-button>
+    <span>
+      <a-button type="primary" @click="onClose" ghost style="margin-left:20px;">取消</a-button>
+    </span>
+</a-drawer>
 
 </template>
 
 
+
+
 <script setup>
-
-//非最终版
-
 
 import {  reactive, ref } from 'vue';
 import { useRoute, useRouter } from "vue-router";
@@ -165,14 +188,19 @@ const columns1 = [
       {
         dataIndex: "dorm_id", 
         title: "宿舍号",
+        width:180,
+        sorter: (a, b) => a.dorm_id - b.dorm_id,
+        sortDirections: ['descend','ascend'],
       },
       {
         dataIndex: "sr_weekno", 
         title: "周次",
+        width:180,
       },
       {
         key: "opr1",
         title: "评分",
+        width:300,
         slots: {
           customRender: "opr1", 
         },
@@ -180,6 +208,7 @@ const columns1 = [
       {
         key: "opr2",
         title: "备注", 
+        width:450,
         slots: {
           customRender: "opr2",
         },
@@ -214,9 +243,9 @@ const page1 = ref({});
 const pagination1 = reactive({
 
       current: 1, 
-      pageSize: 6, 
+      pageSize: 7, 
       total: 0, 
-      pageSizeOptions: ["5","6", "10", "20"], 
+      pageSizeOptions: ["5","7", "10", "20"], 
       showSizeChanger: true, 
       // showQuickJumper: true, 
 
@@ -248,8 +277,7 @@ const getPage1 = (pageNum = 1) => {
       });
     };
 
-getPage1(1); 
-
+getPage1(1);
 
 //评分表表换
 const handleTableChange1 = (
@@ -261,7 +289,6 @@ const handleTableChange1 = (
       pagination1.current = pagi1.current;
       pagination1.pageSize = pagi1.pageSize;
       pagination1.total = pagi1.total;
-
       // getPage(pagination1.current);
     };
 
@@ -285,28 +312,24 @@ const selectMenu1 = ({ item, key, selectedKeys }) => {
     visible6.value = false;
     getPage(1);
   }
-  if(key==3){
-    tip.success("已扩展单独记录界面")
-    visible6.value = true;
-  }
-
+ 
 };
-const excRecordList= () =>{
-  visible3.value = false;
-  console.log(visible3.value);
-  getPage1(1);
-}
+
 
 
 
 //处理单个记录提交
 const execSingleUpd = (score) =>{
   addObj.dorm_id = score.dorm_id;
-  addObj.sr_score = score.sr_score*2;
-  console.log(addObj.sr_score);
   addObj.sr_remark = score.sr_remark;
   addObj.sr_weekno = score.sr_weekno;
-
+  console.log(score.sr_score);
+  if(score.sr_score == null){
+    tip.error("请指定分数");
+    return;
+  }
+  addObj.sr_score = score.sr_score*2;
+ 
   post("/scorer/setscorerecord/single",addObj).then((res)=>{
 
     tip.success("提交成功！");
@@ -317,20 +340,6 @@ const execSingleUpd = (score) =>{
 }
 
 
-//分页评分提交
-const uploadList = () => {
-
-  getPage1(1);
-  console.log(page1.list);
-  post("/scorer/setscore",page1.list).then((res)=>{
-    tip.success("上传成功！");
-    getPage1(1);
-  })
-  
-}
-
-
-
 
 //分页历史记录表
 const currPage = ref("score");
@@ -338,22 +347,31 @@ const columns = [
       {
         dataIndex: "dorm_id",
         title: "宿舍号", 
+        width:180,
+        sorter: (a, b) => a.dorm_id - b.dorm_id,
+        sortDirections: ['descend','ascend'],
       },
       {
         dataIndex: "sr_weekno", 
         title: "周次", 
+        width:180,
+        sorter: (a, b) => a.sr_weekno - b.sr_weekno,
+        sortDirections: ['descend','ascend'],
       },
       {
         dataIndex: "sr_score", 
         title: "该周分数", 
+        width:200,
       },
       {
         dataIndex: "sr_remark", 
         title: "备注",
+        width:350,
       },
       {
         dataIndex: "scorer_id",
         title: "评分人", 
+        width:150,
       },
       {
         key: "opr",
@@ -403,9 +421,7 @@ const getPage = (pageNum = 1) => {
         pagination.pageSize = page.value.pageSize;
         pagination.total = page.value.total;
       });
-    };
-    getPage(1); 
-
+    };  
 
 //记录表更改
 const handleTableChange = (
@@ -503,6 +519,7 @@ const temp = () =>{
       addObj.sr_score = 3;
       console.log("新增记录成功");
       getPage(page.value.current);
+      getPage1(page1.value.current);
   })
 }
 
@@ -527,8 +544,84 @@ const route = useRoute();
 const starvalue = ref(3);
 const desc = ref(['  极差:1分', '  极差:2分','  差:3分','  较差:4分','  较差:5分', '  及格:6分', '  良好:7分', '  良好:8分','  优秀:9分','  优秀:10分']);
 const desc1 = ref(['极差','较差','及格','良好','优秀'])
-    
+
+const onClose = () =>{
+  addObj.sr_score = 3,
+  visible6.value = false;
+}
+
+const openDrawer = () =>{
+  addObj.dorm_id="",
+  addObj.sr_score = 3;
+  addObj.sr_remark = "NULL";
+  addObj.sr_weekno = null;
+    tip.success("已扩展单独增添记录界面");
+    visible6.value = true;
+}
+
+
+const uploadAndCLose = () =>{
+  if(addObj.dorm_id==""&&addObj.sr_weekno==null){
+    tip.error("请输入完整记录！");
+    return;
+  }
+  addObj.sr_score = addObj.sr_score*2;
+  post("/scorer/setscorerecord/single",addObj).then((res)=>{
+    tip.success("提交记录成功！");
+    visible6.value=false;
+    addObj.sr_score = 3;
+  })
+}
+
+//历史记录搜索
+const dormIDtarget =reactive({
+  dorm_id:""
+});
+
+const searchAndUpdateList = () =>{
+      // getPage(1);
+      console.log("list:👇");
+      console.log( page.value.list );
+      console.log("搜索的宿舍号：↓");
+      console.log(dormIDtarget.dorm_id);
+      console.log("总记录条数：");
+      console.log(page.value.total)
+      var j=0;
+      for(var i=0;i<page.value.pageSize;i++){
+        console.log("第几条记录（j）：");
+        console.log(j);
+        console.log("此条记录值");
+        console.log(page.value.list[j]);
+        console.log("此条记录宿舍：");
+        console.log(page.value.list[j].dorm_id);
+        console.log("是否相等于搜索值：");
+        console.log(page.value.list[j].dorm_id == dormIDtarget.dorm_id);
+        if(page.value.list[j].dorm_id != dormIDtarget.dorm_id){
+          page.value.list.splice(j,1);
+          console.log("更新后的同位置记录：");
+          console.log(page.value.list[j]);
+          page.value.total = page.value.total-1;
+          console.log("剩余总记录数");
+          console.log(page.value.total);
+          j=j-1;
+        }
+        j=j+1;
+        console.log("查询到的记录数");
+        console.log(j);
+      }
+      pagination.current = page.value.current;
+      pagination.pageSize = page.value.pageSize;
+      pagination.total = page.value.total;
+     
+    }
+
+
+
+
+//尝试
+
 </script>
+
 
 
 <style>
